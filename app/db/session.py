@@ -88,6 +88,16 @@ async def get_session() -> AsyncIterator[AsyncSession]:
             raise
 
 
+async def create_tables() -> None:
+    """Create all tables defined by the ORM models. Idempotent."""
+    import app.db.models  # noqa: F401 — registers all tables on Base.metadata
+    from app.db.base import Base
+    if _engine is None:
+        init_engine()
+    async with _engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+
 async def dispose_engine() -> None:
     """Called on app shutdown."""
     global _engine, _sessionmaker

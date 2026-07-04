@@ -17,9 +17,7 @@ from sqlalchemy import text
 from app.api import api_router
 from app.config import get_settings
 from app.core.exceptions import AppError
-from app.db.base import Base
-import app.db.models  # noqa: F401 — registers all tables on Base.metadata
-from app.db.session import dispose_engine, get_sessionmaker, init_engine
+from app.db.session import create_tables, dispose_engine, get_sessionmaker, init_engine
 from app.logging_config import configure_logging, get_logger
 from app.ws import ws_router
 
@@ -51,8 +49,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         log.warning("db_unreachable_at_startup", error=str(e))
 
     try:
-        async with get_sessionmaker()() as s:
-            await s.run_sync(Base.metadata.create_all)
+        await create_tables()
         log.info("schema_ready")
     except Exception as e:
         log.warning("schema_creation_failed", error=str(e))
